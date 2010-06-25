@@ -14,9 +14,9 @@ class phpDataMapper_Relation_HasMany extends phpDataMapper_Relation implements C
 	 *
 	 * @return phpDataMapper_Query
 	 */
-	public function all()
+	public function all(array $conditions = array())
 	{
-		return $this->mapper()->all($this->conditions())->order($this->relationOrder());
+		return $this->mapper()->all(array_merge($this->conditions(), $conditions))->order($this->relationOrder());
 	}
 	
 	
@@ -25,9 +25,9 @@ class phpDataMapper_Relation_HasMany extends phpDataMapper_Relation implements C
 	 *
 	 * @return phpDataMapper_Entity
 	 */
-	public function first()
+	public function first(array $conditions = array())
 	{
-		return $this->all()->first();
+		return $this->all($conditions)->first();
 	}
 	
 	
