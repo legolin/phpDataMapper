@@ -209,7 +209,7 @@ class phpDataMapper_Base
 			$returnFields = array();
 			foreach($fields as $fieldName => $fieldOpts) {
 				// Format field will full set of default options
-				if(isset($fieldInfo['type']) && isset($fieldTypeDefaults[$fieldOpts['type']])) {
+				if(isset($fieldOpts['type']) && isset($fieldTypeDefaults[$fieldOpts['type']])) {
 					// Include type defaults
 					$fieldOpts = array_merge($fieldDefaults, $fieldTypeDefaults[$fieldOpts['type']], $fieldOpts);
 				} else {
@@ -478,6 +478,7 @@ class phpDataMapper_Base
 	 */
 	protected function saveRelatedRowsFor($entity, array $fillData = array())
 	{
+		return true;
 		$relationColumns = $this->getRelationsFor($entity);
 		foreach($entity->toArray() as $field => $value) {
 			if($relationColumns && array_key_exists($field, $relationColumns) && (is_array($value) || is_object($value))) {
@@ -571,7 +572,7 @@ class phpDataMapper_Base
 				$data[$field] = $this->isEmpty($value) ? null : $value;
 			}
 		}
-		
+
 		// Ensure there is actually data to update
 		if(count($data) > 0) {
 			$result = $this->adapter()->create($this->datasource(), $data);
@@ -590,7 +591,6 @@ class phpDataMapper_Base
 		} else {
 			$result = false;
 		}
-		
 		// Save related rows
 		if($result) {
 			$this->saveRelatedRowsFor($entity);
@@ -678,10 +678,11 @@ class phpDataMapper_Base
 	{
 		// Check validation rules on each feild
 		foreach($this->fields() as $field => $fieldAttrs) {
+			$human_field_name = $this->human_field_name($field, $fieldAttrs);
 			if(isset($fieldAttrs['required']) && true === $fieldAttrs['required']) {
 				// Required field
 				if(empty($entity->$field)) {
-					$this->error($field, "Required field '" . $field . "' was left blank");
+					$this->error($field, $human_field_name . " must be provided");
 				}
 			}
 		}
@@ -836,6 +837,15 @@ class phpDataMapper_Base
 			'query' => $sql,
 			'data' => $data
 			);
+			
+		$logger = new Logger(LOG_PATH);
+		$logger->info(preg_replace('/\s{2,99}/', ' ', str_replace("\n", '', $sql)) . ' ('.str_replace("\n", '', var_export($data, true)).')');
+	}
+	
+	private function human_field_name($field, $fieldAttrs) {
+		if(isset($fieldAttrs['human_name'])) { return $fieldAttrs['human_name']; }
+		$field = strtolower(preg_replace(array('/[^A-Z^a-z^0-9^\/]+/','/([a-z\d])([A-Z])/','/([A-Z]+)([A-Z][a-z])/'), array('_','\1_\2','\1_\2'), $field));
+		return ucfirst(str_replace('_',' ',preg_replace('/_id$/', '',$field)));
 	}
 }
 
