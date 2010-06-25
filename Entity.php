@@ -13,6 +13,8 @@ class phpDataMapper_Entity
 	protected $_dataModified = array();
 	protected $_getterIgnore = array();
 	protected $_setterIgnore = array();
+	private $errors = array();
+	
 	
 	
 	/**
@@ -41,6 +43,24 @@ class phpDataMapper_Entity
 		$this->_loaded = (bool) $loaded;
 	}
 	
+	/**
+	 * Set attributes from an array
+	 * @param Array $attributes
+	 */
+	public function attributes($attributes) {
+		if(!$attributes) return;
+		foreach($attributes as $key => $value) {
+			$this->{$key} = $value;
+		}
+	}
+	
+	
+	/**
+	 * Returns false if the record has a numeric ID
+	 */
+	public function new_record() {
+		return !is_numeric($this->id);
+	}
 	
 	/**
 	 *	Sets an object or array
@@ -104,6 +124,55 @@ class phpDataMapper_Entity
 		return ($this->$key !== null) ? true : false;
 	}
 	
+
+	public function validate($category = false) {
+
+		if(!isset($this->validations)) return true;
+
+		foreach($this->validations as $field => $rules) {
+			
+			if(isset($rules['allow_blank']) && $rules['allow_blank'] && empty($this->$field)) continue;
+			if($category && (!isset($rules['category']) || $rules['category'] != $category)) continue;
+			
+			foreach($rules as $rule => $details) {
+				switch($rule) {
+				case 'required':
+					if(empty($this->$field)) $this->add_error($field, 'must be provided.');
+					break;
+				case 'format': 
+					switch($details) {
+						case 'email': $details = '^[\w\d+_\-\.]+@[\w\d_\-\.]+\.\w{2,4}$'; break;
+						default: break;
+					}
+					if(preg_match('/'.$details.'/', $this->$field) == 0) $this->add_error($field, 'is invalid.');
+					break;
+				case 'length':
+					if($details['min'] && (strlen($this->$field) < $details['min'])) $this->add_error($field, 'must be at least '.$details['min'].' characters long.');
+					break;
+				case 'requires_confirmation':
+					$confirmation_field = $field . '_confirmation';
+					if($this->$field != $this->$confirmation_field) $this->add_error($field, 'must match the confirmation');
+					break;
+				default:
+				}
+			}
+		}
+		$valid = empty($this->errors);
+		return $valid;
+	}
+	
+	public function add_error($field, $message) {
+		if(!isset($this->errors[$field])) $this->errors[$field] = array();
+		$this->errors[$field][] = $message;
+	}
+	
+	public function errors() {
+		return $this->errors;
+	}
+
+	public function error_on($field) {
+		return (isset($this->errors[$field])) ? $this->errors[$field] : null;
+	}
 	
 	/**
 	 * Getter
@@ -153,4 +222,7 @@ class phpDataMapper_Entity
 			}
 		}
 	}
+	
+	
+	
 }
