@@ -170,6 +170,14 @@ class phpDataMapper_Entity
 		return $this->errors;
 	}
 
+	public function has_errors() {
+		return (!empty($this->errors));
+	}
+	
+	public function valid() {
+		return empty($this->errors);
+	}
+	
 	public function error_on($field) {
 		return (isset($this->errors[$field])) ? $this->errors[$field] : null;
 	}
