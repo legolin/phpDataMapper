@@ -132,7 +132,7 @@ class phpDataMapper_Entity
 		foreach($this->validations as $field => $rules) {
 			
 			if(isset($rules['allow_blank']) && $rules['allow_blank'] && empty($this->$field)) continue;
-			if($category && (!isset($rules['category']) || $rules['category'] != $category)) continue;
+			if(isset($rules['if']) && !$this->{$rules['if']}()) continue;
 			if((!$category && isset($rules['category'])) || $category && (!isset($rules['category']) || $rules['category'] != $category )) continue;
 			
 			foreach($rules as $rule => $details) {
