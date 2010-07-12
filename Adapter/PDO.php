@@ -296,6 +296,7 @@ abstract class phpDataMapper_Adapter_PDO implements phpDataMapper_Adapter_Interf
 		$sql = "
 			SELECT " . $this->statementFields($query->fields) . "
 			FROM " . $query->source . "
+			" . ($query->joins ? $query->joins : '') . "
 			" . ($conditions ? 'WHERE ' . $conditions : '') . "
 			" . ($query->group ? 'GROUP BY ' . implode(', ', $query->group) : '') . "
 			" . ($order ? 'ORDER BY ' . implode(', ', $order) : '') . "

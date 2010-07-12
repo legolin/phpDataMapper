@@ -18,6 +18,7 @@ class phpDataMapper_Query implements Countable, IteratorAggregate
 	public $group = array();
 	public $limit;
 	public $limitOffset;
+	public $joins;
 	
 	
 	/**
@@ -67,7 +68,21 @@ class phpDataMapper_Query implements Countable, IteratorAggregate
 		return $this;
 	}
 	
+
+
+	/**
+	 * Joins
+	 *
+	 * @param string $source Name of the data source to perform a query on
+	 * @todo Support multiple sources/joins
+	 */
+	public function joins($joins = null)
+	{
+		$this->joins = $joins;
+		return $this;
+	}
 	
+
 	/**
 	 * Find records with given conditions
 	 * If all parameters are empty, find all records

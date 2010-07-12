@@ -129,30 +129,48 @@ class phpDataMapper_Entity
 
 		if(!isset($this->validations)) return true;
 
-		foreach($this->validations as $field => $rules) {
+		// Let's flatten validations
+		
+		$validations = array();
+		foreach($this->validations as $key => $rules) {
+			// We assume there are no numeric rules, so numeric keys mean sub-rules
+			$rule_keys = array_keys($rules);
+			if(is_numeric($rule_keys[0])) {
+				foreach($rules as $rule) {
+					$validations[] = array($key, $rule);
+				}
+			} else {
+				$validations[] = array($key, $rules);
+			}
+		}
+
+		foreach($validations as $validation) {
+			
+			$field = $validation[0];
+			$rules = $validation[1];
 			
 			if(isset($rules['allow_blank']) && $rules['allow_blank'] && empty($this->$field)) continue;
 			if(isset($rules['if']) && !$this->{$rules['if']}()) continue;
 			if((!$category && isset($rules['category'])) || $category && (!isset($rules['category']) || $rules['category'] != $category )) continue;
-			
+			$message = ''; if(isset($rules['message']) && !empty($rules['message'])) $message = $rules['message'];
 			foreach($rules as $rule => $details) {
 				switch($rule) {
 				case 'required':
-					if(empty($this->$field)) $this->add_error($field, 'must be provided.');
+					if(empty($this->$field)) $this->add_error($field, $this->message_or_default($message, 'must be provided.'));
 					break;
 				case 'format': 
 					switch($details) {
 						case 'email': $details = '^[\w\d+_\-\.]+@[\w\d_\-\.]+\.\w{2,4}$'; break;
 						default: break;
 					}
-					if(preg_match('/'.$details.'/', $this->$field) == 0) $this->add_error($field, 'is invalid.');
+					if(preg_match('/'.$details.'/', $this->$field) == 0) $this->add_error($field, $this->message_or_default($message, 'is invalid.'));
 					break;
 				case 'length':
 					if($details['min'] && (strlen($this->$field) < $details['min'])) $this->add_error($field, 'must be at least '.$details['min'].' characters long.');
 					break;
 				case 'requires_confirmation':
 					$confirmation_field = $field . '_confirmation';
-					if($this->$field != $this->$confirmation_field) $this->add_error($field, 'must match the confirmation');
+					if($this->$field != $this->$confirmation_field) $this->add_error($field, $this->message_or_default($message, 'must match the confirmation'));
 					break;
 				default:
 				}
@@ -160,6 +178,11 @@ class phpDataMapper_Entity
 		}
 		$valid = empty($this->errors);
 		return $valid;
+	}
+	
+	private function message_or_default($message, $default) {
+		if(isset($message) && !empty($message)) return $message;
+		return $default;
 	}
 	
 	public function add_error($field, $message) {
