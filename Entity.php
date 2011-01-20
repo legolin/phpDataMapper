@@ -206,6 +206,14 @@ class phpDataMapper_Entity
 		return (isset($this->errors[$field])) ? $this->errors[$field] : null;
 	}
 	
+	public function is($state_value) {
+	  if(isset($this->state)) {
+	    return ($this->state == $state_value);
+	  } else {
+	    return false;
+	  }
+	}
+	
 	/**
 	 * Getter
 	 */
