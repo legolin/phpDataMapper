@@ -208,7 +208,15 @@ class phpDataMapper_Entity
 	
 	public function is($state_value) {
 	  if(isset($this->state)) {
-	    return ($this->state == $state_value);
+	    if(func_num_args() == 1) {
+	      return ($this->state == $state_value);
+	    } else {
+	      $values = func_get_args();
+	      foreach($values as $value) {
+	        if($this->state == $value) return true;
+	      }
+	    }
+	    return false;
 	  } else {
 	    return false;
 	  }
